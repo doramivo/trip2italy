@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Swiss Alps & Italian Lakes Trip</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -116,6 +118,60 @@
     font-weight: 500;
   }
 
+  /* Map panel */
+  .map-panel {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 300px;
+    height: 240px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 200;
+    transition: all 0.4s ease;
+    background: #1a1a2e;
+  }
+
+  .map-panel.expanded {
+    width: 500px;
+    height: 400px;
+  }
+
+  .map-panel-header {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f0c040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .map-toggle-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  .map-toggle-btn:hover { opacity: 1; }
+
+  #tripMap {
+    width: 100%;
+    height: calc(100% - 32px);
+  }
+
   /* Navigation */
   .nav-arrows {
     position: fixed;
@@ -157,7 +213,6 @@
     transition: width 0.5s ease;
   }
 
-  /* Slide counter */
   .slide-counter {
     position: fixed;
     top: 24px;
@@ -169,7 +224,6 @@
     z-index: 100;
   }
 
-  /* Title slide special */
   .title-slide .slide-title {
     font-size: 72px;
     margin-bottom: 12px;
@@ -188,7 +242,6 @@
     margin-top: 20px;
   }
 
-  /* Budget slide */
   .budget-table {
     width: 100%;
     max-width: 600px;
@@ -223,7 +276,6 @@
 
   .budget-table tr.total td:first-child { font-weight: 600; }
 
-  /* Highlights list */
   .highlights {
     list-style: none;
     text-align: left;
@@ -250,7 +302,6 @@
     flex-shrink: 0;
   }
 
-  /* Keyboard hint */
   .keyboard-hint {
     position: fixed;
     bottom: 100px;
@@ -262,14 +313,30 @@
     z-index: 100;
   }
 
-  /* Photo credit overlay */
   .photo-credit {
     position: absolute;
     bottom: 12px;
-    right: 16px;
+    left: 16px;
     font-size: 10px;
     opacity: 0.3;
     z-index: 3;
+  }
+
+  .leaflet-popup-content-wrapper {
+    background: rgba(20,20,30,0.95) !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(240,192,64,0.3) !important;
+  }
+
+  .leaflet-popup-tip {
+    background: rgba(20,20,30,0.95) !important;
+  }
+
+  .leaflet-popup-content {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13px !important;
+    margin: 10px 14px !important;
   }
 
   @media (max-width: 768px) {
@@ -279,18 +346,20 @@
     .slide-content { padding: 24px; }
     .detail-item { min-width: 110px; padding: 12px 16px; }
     .slide-details { gap: 12px; }
+    .map-panel { width: 200px; height: 180px; bottom: 90px; right: 10px; }
+    .map-panel.expanded { width: 90vw; height: 50vh; right: 5vw; }
   }
 </style>
 </head>
 <body>
 
 <div class="progress-bar" id="progressBar"></div>
-<div class="slide-counter" id="slideCounter">1 / 10</div>
+<div class="slide-counter" id="slideCounter">1 / 12</div>
 
 <div class="slideshow" id="slideshow">
 
   <!-- SLIDE 1: Title -->
-  <div class="slide title-slide active" data-bg="https://images.unsplash.com/photo-1610641816098-aecad8df33f1?q=80&w=1600&auto=format&fit=crop">
+  <div class="slide title-slide active" data-bg="https://images.unsplash.com/photo-1610641816098-aecad8df33f1?q=80&w=1600&auto=format&fit=crop" data-location="-1">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Road Trip Adventure</div>
@@ -302,7 +371,7 @@
   </div>
 
   <!-- SLIDE 2: Route Overview -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1693842897077-9b07b328ae35?q=80&w=1600&auto=format&fit=crop">
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1693842897077-9b07b328ae35?q=80&w=1600&auto=format&fit=crop" data-location="-1">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">The Route</div>
@@ -310,7 +379,7 @@
       <ul class="highlights">
         <li><span class="icon">✈</span> Fly Porto → Zurich</li>
         <li><span class="icon">🏔</span> Night 1 — Maienfeld (Heididorf)</li>
-        <li><span class="icon">🌊</span> Nights 2–4 — Laveno-Mombello (Lake Maggiore)</li>
+        <li><span class="icon">🌊</span> Nights 2–4 — Laveno (Lake Maggiore)</li>
         <li><span class="icon">⛵</span> Nights 5–6 — Menaggio (Lake Como)</li>
         <li><span class="icon">✈</span> Day 7 — Drive to ZRH, fly home</li>
       </ul>
@@ -333,7 +402,7 @@
   </div>
 
   <!-- SLIDE 3: Day 1 — Heididorf -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1527668752968-14dc70a27c95?q=80&w=1600&auto=format&fit=crop">
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1527668752968-14dc70a27c95?q=80&w=1600&auto=format&fit=crop" data-location="0">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 1 &middot; Night in Maienfeld</div>
@@ -358,20 +427,24 @@
   </div>
 
   <!-- SLIDE 4: Day 2 — Laveno / Lake Maggiore -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1693842897077-9b07b328ae35?q=80&w=1600&auto=format&fit=crop">
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1693842897077-9b07b328ae35?q=80&w=1600&auto=format&fit=crop" data-location="1">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 2 &middot; Night in Laveno</div>
       <div class="slide-title">Lake Maggiore</div>
-      <div class="slide-subtitle">Drive south through the Gotthard Pass into the Italian Lakes.<br>Arrive in Laveno-Mombello on the eastern shore of Lake Maggiore.</div>
+      <div class="slide-subtitle">Drive south through the Gotthard Pass into the Italian Lakes.<br>Coffee stop in <strong>Andermatt</strong> (scenic Alpine village, ~1h10), then 1h20 to Laveno.</div>
       <div class="slide-details">
         <div class="detail-item">
           <div class="detail-label">Drive</div>
           <div class="detail-value">210 km</div>
         </div>
         <div class="detail-item">
-          <div class="detail-label">Time</div>
-          <div class="detail-value">2.5 hours</div>
+          <div class="detail-label">☕ Stop</div>
+          <div class="detail-value">Andermatt</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Legs</div>
+          <div class="detail-value">1h10 + 1h20</div>
         </div>
         <div class="detail-item">
           <div class="detail-label">Stay</div>
@@ -383,7 +456,7 @@
   </div>
 
   <!-- SLIDE 5: Day 3 — Borromean Islands -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1628701303556-b95cfe0e4c02?q=80&w=1600&auto=format&fit=crop">
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1628701303556-b95cfe0e4c02?q=80&w=1600&auto=format&fit=crop" data-location="2">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 3 &middot; Rest Day</div>
@@ -408,7 +481,7 @@
   </div>
 
   <!-- SLIDE 6: Day 4 — Locarno / Lago d'Orta -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1610641816098-aecad8df33f1?q=80&w=1600&auto=format&fit=crop">
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1610641816098-aecad8df33f1?q=80&w=1600&auto=format&fit=crop" data-location="3">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 4 &middot; Rest Day</div>
@@ -432,21 +505,21 @@
     <div class="photo-credit">Photo: Fabio Fistarol / Unsplash</div>
   </div>
 
-  <!-- SLIDE 7: Day 5 — Menaggio / Nesso -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1591518329953-433ba981bc41?q=80&w=1600&auto=format&fit=crop">
+  <!-- SLIDE 7: Day 5 — Menaggio -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1591518329953-433ba981bc41?q=80&w=1600&auto=format&fit=crop" data-location="4">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 5 &middot; Night in Menaggio</div>
-      <div class="slide-title">Lake Como &amp; Nesso</div>
-      <div class="slide-subtitle">Short drive to Lake Como. Ferry across to Varenna, then south to Nesso — <br>the famous waterfall bridge and gorge. Evening in charming Menaggio.</div>
+      <div class="slide-title">Lake Como</div>
+      <div class="slide-subtitle">Short drive from Laveno to the western shore of Lake Como.<br>Settle into charming Menaggio, ferry hub for the entire lake.</div>
       <div class="slide-details">
         <div class="detail-item">
           <div class="detail-label">Drive</div>
           <div class="detail-value">40 km</div>
         </div>
         <div class="detail-item">
-          <div class="detail-label">Highlight</div>
-          <div class="detail-value">🚢 + Nesso</div>
+          <div class="detail-label">Time</div>
+          <div class="detail-value">50 min</div>
         </div>
         <div class="detail-item">
           <div class="detail-label">Stay</div>
@@ -457,8 +530,33 @@
     <div class="photo-credit">Photo: Shalev Cohen / Unsplash</div>
   </div>
 
-  <!-- SLIDE 8: Day 6 — Bellagio / Tremezzo -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1586975303199-8c54f3ee97f2?q=80&w=1600&auto=format&fit=crop">
+  <!-- SLIDE 8: Nesso -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1591523220721-d68764fd8386?q=80&w=1600&auto=format&fit=crop" data-location="5">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 5 &middot; Afternoon Excursion</div>
+      <div class="slide-title">Nesso</div>
+      <div class="slide-subtitle">Ferry from Menaggio to Varenna, then drive south along the dramatic east shore<br>to Nesso — the famous Ponte della Civera waterfall bridge and hidden gorge.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Access</div>
+          <div class="detail-value">🚢 + Drive</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlight</div>
+          <div class="detail-value">Waterfall Bridge</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Vibe</div>
+          <div class="detail-value">Hidden Gem</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Shalev Cohen / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 9: Day 6 — Bellagio / Tremezzo -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1586975303199-8c54f3ee97f2?q=80&w=1600&auto=format&fit=crop" data-location="6">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 6 &middot; Rest Day</div>
@@ -482,21 +580,25 @@
     <div class="photo-credit">Photo: Lewis J Goetz / Unsplash</div>
   </div>
 
-  <!-- SLIDE 9: Day 7 — Departure -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1591523220721-d68764fd8386?q=80&w=1600&auto=format&fit=crop">
+  <!-- SLIDE 10: Day 7 — Departure -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1527668752968-14dc70a27c95?q=80&w=1600&auto=format&fit=crop" data-location="7">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Day 7 &middot; Departure</div>
       <div class="slide-title">Menaggio → Zurich</div>
-      <div class="slide-subtitle">Morning drive back through the Alps to Zurich Airport.<br>Drop off the car and catch your afternoon flight home.</div>
+      <div class="slide-subtitle">Morning drive north with a stop in <strong>Bellinzona</strong> — 3 UNESCO medieval castles.<br>Quick walk through the old town (~1h10 from Menaggio), then 1h20 to ZRH.</div>
       <div class="slide-details">
         <div class="detail-item">
           <div class="detail-label">Drive</div>
           <div class="detail-value">200 km</div>
         </div>
         <div class="detail-item">
-          <div class="detail-label">Time</div>
-          <div class="detail-value">2.5 hours</div>
+          <div class="detail-label">☕ Stop</div>
+          <div class="detail-value">Bellinzona</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Legs</div>
+          <div class="detail-value">1h10 + 1h20</div>
         </div>
         <div class="detail-item">
           <div class="detail-label">Flight</div>
@@ -504,11 +606,11 @@
         </div>
       </div>
     </div>
-    <div class="photo-credit">Photo: Shalev Cohen / Unsplash</div>
+    <div class="photo-credit">Photo: Unsplash</div>
   </div>
 
-  <!-- SLIDE 10: Budget -->
-  <div class="slide" data-bg="https://images.unsplash.com/photo-1628701303556-b95cfe0e4c02?q=80&w=1600&auto=format&fit=crop">
+  <!-- SLIDE 11: Budget -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1628701303556-b95cfe0e4c02?q=80&w=1600&auto=format&fit=crop" data-location="-1">
     <div class="slide-bg"></div>
     <div class="slide-content">
       <div class="slide-day">Budget &middot; Mid-Range &middot; 2 People</div>
@@ -529,9 +631,29 @@
     <div class="photo-credit">Photo: Claudio Schwarz / Unsplash</div>
   </div>
 
+  <!-- SLIDE 12: End -->
+  <div class="slide title-slide" data-bg="https://images.unsplash.com/photo-1586975303199-8c54f3ee97f2?q=80&w=1600&auto=format&fit=crop" data-location="-1">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">See you there</div>
+      <div class="slide-title">Let's go! 🏔⛵</div>
+      <div class="slide-subtitle">Swiss Alps &amp; Italian Lakes &middot; Summer 2026</div>
+    </div>
+    <div class="photo-credit">Photo: Lewis J Goetz / Unsplash</div>
+  </div>
+
 </div>
 
-<div class="keyboard-hint">← → arrow keys or click arrows to navigate</div>
+<!-- Map Panel -->
+<div class="map-panel" id="mapPanel">
+  <div class="map-panel-header" id="mapHeader">
+    <span>🗺 Trip Map</span>
+    <button class="map-toggle-btn" id="mapToggle" title="Expand/collapse map">⛶</button>
+  </div>
+  <div id="tripMap"></div>
+</div>
+
+<div class="keyboard-hint">← → arrow keys &middot; click arrows &middot; expand map ⛶</div>
 
 <div class="nav-arrows">
   <button class="nav-btn" id="prevBtn" aria-label="Previous slide">◀</button>
@@ -539,50 +661,192 @@
 </div>
 
 <script>
+  // ─── LOCATION DATA ───
+  const places = [
+    { name: 'Zurich (ZRH)',      lat: 47.4502, lng: 8.5618  },  // 0
+    { name: 'Maienfeld',         lat: 47.0044, lng: 9.5291  },  // 1
+    { name: 'Andermatt',         lat: 46.6344, lng: 8.5938  },  // 2  ☕ stop
+    { name: 'Laveno-Mombello',   lat: 45.9078, lng: 8.6171  },  // 3
+    { name: 'Borromean Islands', lat: 45.8999, lng: 8.5382  },  // 4
+    { name: 'Locarno',           lat: 46.1670, lng: 8.7990  },  // 5
+    { name: 'Menaggio',          lat: 46.0196, lng: 9.2379  },  // 6
+    { name: 'Nesso',             lat: 45.9120, lng: 9.1567  },  // 7
+    { name: 'Bellagio',          lat: 45.9867, lng: 9.2614  },  // 8
+    { name: 'Bellinzona',        lat: 46.1952, lng: 9.0234  },  // 9  ☕ stop
+  ];
+
+  // The full driving route, in order
+  const routeCoords = [
+    [47.4502, 8.5618],   // 0  Zurich
+    [47.0044, 9.5291],   // 1  Maienfeld
+    [46.6344, 8.5938],   // 2  ☕ Andermatt (coffee stop)
+    [45.9078, 8.6171],   // 3  Laveno
+    [45.8999, 8.5382],   // 4  Borromean Islands (day trip)
+    [45.9078, 8.6171],   // 5  back to Laveno
+    [46.1670, 8.7990],   // 6  Locarno (day trip)
+    [45.9078, 8.6171],   // 7  back to Laveno
+    [46.0196, 9.2379],   // 8  Menaggio
+    [45.9120, 9.1567],   // 9  Nesso (excursion)
+    [46.0196, 9.2379],   // 10 back to Menaggio
+    [45.9867, 9.2614],   // 11 Bellagio (day trip)
+    [46.0196, 9.2379],   // 12 back to Menaggio
+    [46.1952, 9.0234],   // 13 ☕ Bellinzona (coffee stop)
+    [47.4502, 8.5618],   // 14 Zurich (return)
+  ];
+
+  // data-location index → how far along the route to highlight
+  const locToSegment = {
+    0: 1,   // ZRH → Maienfeld
+    1: 3,   // → Andermatt → Laveno
+    2: 4,   // → Borromean
+    3: 6,   // → Locarno (via back to Laveno)
+    4: 8,   // → Menaggio
+    5: 9,   // → Nesso
+    6: 11,  // → Bellagio
+    7: 14,  // → Bellinzona → Zurich (full loop)
+  };
+
+  // Which place marker to highlight per data-location
+  const locToActivePlace = { 0:1, 1:3, 2:4, 3:5, 4:6, 5:7, 6:8, 7:0 };
+
+  // ─── MAP ───
+  const map = L.map('tripMap', { zoomControl: false, attributionControl: false })
+    .setView([46.3, 8.9], 7);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18
+  }).addTo(map);
+
+  // Full route line (dim)
+  const fullLine = L.polyline(routeCoords, {
+    color: 'rgba(255,255,255,0.12)',
+    weight: 2,
+    dashArray: '6,8'
+  }).addTo(map);
+
+  // Active route line (gold)
+  const activeLine = L.polyline([], {
+    color: '#f0c040',
+    weight: 3.5,
+    opacity: 0.9
+  }).addTo(map);
+
+  // Place markers
+  const placeMarkers = places.map((p, i) => {
+    const m = L.circleMarker([p.lat, p.lng], {
+      radius: 5,
+      fillColor: 'rgba(255,255,255,0.3)',
+      color: 'rgba(255,255,255,0.4)',
+      weight: 2,
+      fillOpacity: 0.5
+    }).addTo(map);
+    m.bindPopup(`<strong>${p.name}</strong>`);
+    return m;
+  });
+
+  // Active location pulse marker
+  const pulseMarker = L.circleMarker([0,0], {
+    radius: 10,
+    fillColor: '#f0c040',
+    color: '#fff',
+    weight: 3,
+    fillOpacity: 0.9,
+    opacity: 0
+  }).addTo(map);
+
+  function updateMap(locIdx) {
+    if (locIdx < 0) {
+      // Overview: show full route, reset markers
+      activeLine.setLatLngs([]);
+      pulseMarker.setStyle({ opacity: 0, fillOpacity: 0 });
+      placeMarkers.forEach(m => {
+        m.setRadius(5);
+        m.setStyle({ fillColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.4)', weight: 2, fillOpacity: 0.5 });
+      });
+      map.fitBounds(fullLine.getBounds().pad(0.15), { animate: true });
+      return;
+    }
+
+    // Highlight route up to current segment
+    const seg = locToSegment[locIdx] || 0;
+    activeLine.setLatLngs(routeCoords.slice(0, seg + 1));
+
+    // Highlight current place
+    const activeIdx = locToActivePlace[locIdx];
+    placeMarkers.forEach((m, i) => {
+      if (i === activeIdx) {
+        m.setRadius(8);
+        m.setStyle({ fillColor: '#f0c040', color: '#fff', weight: 3, fillOpacity: 1 });
+      } else {
+        // visited (before active) or future
+        const visited = i < activeIdx || (locIdx === 7 && i === 0);
+        m.setRadius(5);
+        m.setStyle({
+          fillColor: visited ? '#888' : 'rgba(255,255,255,0.2)',
+          color: visited ? '#bbb' : 'rgba(255,255,255,0.3)',
+          weight: 2,
+          fillOpacity: visited ? 0.7 : 0.4
+        });
+      }
+    });
+
+    // Pulse marker on active location
+    const activePlace = places[activeIdx];
+    pulseMarker.setLatLng([activePlace.lat, activePlace.lng]);
+    pulseMarker.setStyle({ opacity: 0.6, fillOpacity: 0.3 });
+
+    // Pan map
+    map.setView([activePlace.lat, activePlace.lng], 10, { animate: true, duration: 0.8 });
+  }
+
+  // ─── SLIDESHOW ───
   const slides = document.querySelectorAll('.slide');
   const counter = document.getElementById('slideCounter');
-  const progress = document.getElementById('progressBar');
+  const progressBar = document.getElementById('progressBar');
   let current = 0;
   const total = slides.length;
 
-  // Preload background images
-  slides.forEach(slide => {
-    const url = slide.dataset.bg;
-    if (url) {
-      slide.querySelector('.slide-bg').style.backgroundImage = `url(${url})`;
-    }
+  slides.forEach(s => {
+    const url = s.dataset.bg;
+    if (url) s.querySelector('.slide-bg').style.backgroundImage = `url(${url})`;
   });
 
-  function goTo(index) {
-    if (index < 0) index = total - 1;
-    if (index >= total) index = 0;
+  function goTo(idx) {
+    if (idx < 0) idx = total - 1;
+    if (idx >= total) idx = 0;
     slides[current].classList.remove('active');
-    slides[index].classList.add('active');
-    current = index;
+    slides[idx].classList.add('active');
+    current = idx;
     counter.textContent = `${current + 1} / ${total}`;
-    progress.style.width = `${((current + 1) / total) * 100}%`;
+    progressBar.style.width = `${((current + 1) / total) * 100}%`;
+    updateMap(parseInt(slides[current].dataset.location));
   }
 
   document.getElementById('prevBtn').addEventListener('click', () => goTo(current - 1));
   document.getElementById('nextBtn').addEventListener('click', () => goTo(current + 1));
 
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
   });
 
-  // Touch swipe support
-  let touchStartX = 0;
-  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
-  document.addEventListener('touchend', (e) => {
-    const diff = touchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      diff > 0 ? goTo(current + 1) : goTo(current - 1);
-    }
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const d = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(d) > 50) d > 0 ? goTo(current + 1) : goTo(current - 1);
   });
 
-  // Initialize
+  // Map expand/collapse
+  const mapPanel = document.getElementById('mapPanel');
+  document.getElementById('mapToggle').addEventListener('click', e => {
+    e.stopPropagation();
+    mapPanel.classList.toggle('expanded');
+    setTimeout(() => map.invalidateSize(), 400);
+  });
+
   goTo(0);
+  setTimeout(() => map.invalidateSize(), 500);
 </script>
 
 </body>
