@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiss Alps & Italian Lakes Trip</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .slideshow {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .slide-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.45);
+  }
+
+  .slide-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+    padding: 40px;
+  }
+
+  .slide-day {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #f0c040;
+    margin-bottom: 16px;
+  }
+
+  .slide-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+
+  .slide-subtitle {
+    font-size: 22px;
+    font-weight: 300;
+    opacity: 0.9;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .slide-details {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+
+  .detail-item {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 16px 24px;
+    text-align: center;
+    min-width: 140px;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    margin-bottom: 6px;
+  }
+
+  .detail-value {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  /* Navigation */
+  .nav-arrows {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .nav-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.6);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f0c040, #e07020);
+    z-index: 100;
+    transition: width 0.5s ease;
+  }
+
+  /* Slide counter */
+  .slide-counter {
+    position: fixed;
+    top: 24px;
+    right: 32px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    z-index: 100;
+  }
+
+  /* Title slide special */
+  .title-slide .slide-title {
+    font-size: 72px;
+    margin-bottom: 12px;
+  }
+
+  .title-slide .slide-subtitle {
+    font-size: 26px;
+    opacity: 0.8;
+  }
+
+  .title-date {
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    opacity: 0.6;
+    margin-top: 20px;
+  }
+
+  /* Budget slide */
+  .budget-table {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+  }
+
+  .budget-table td {
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.06);
+    font-size: 16px;
+  }
+
+  .budget-table td:first-child {
+    border-radius: 8px 0 0 8px;
+    font-weight: 400;
+  }
+
+  .budget-table td:last-child {
+    border-radius: 0 8px 8px 0;
+    text-align: right;
+    font-weight: 600;
+    color: #f0c040;
+  }
+
+  .budget-table tr.total td {
+    background: rgba(240,192,64,0.15);
+    font-size: 20px;
+    padding: 14px 16px;
+  }
+
+  .budget-table tr.total td:first-child { font-weight: 600; }
+
+  /* Highlights list */
+  .highlights {
+    list-style: none;
+    text-align: left;
+    margin: 0 auto;
+    max-width: 500px;
+  }
+
+  .highlights li {
+    padding: 8px 0;
+    font-size: 18px;
+    font-weight: 300;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .highlights li:last-child { border-bottom: none; }
+
+  .highlights li .icon {
+    font-size: 22px;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* Keyboard hint */
+  .keyboard-hint {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 2px;
+    opacity: 0.4;
+    z-index: 100;
+  }
+
+  /* Photo credit overlay */
+  .photo-credit {
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+    font-size: 10px;
+    opacity: 0.3;
+    z-index: 3;
+  }
+
+  @media (max-width: 768px) {
+    .slide-title { font-size: 36px; }
+    .title-slide .slide-title { font-size: 44px; }
+    .slide-subtitle { font-size: 17px; }
+    .slide-content { padding: 24px; }
+    .detail-item { min-width: 110px; padding: 12px 16px; }
+    .slide-details { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="slide-counter" id="slideCounter">1 / 10</div>
+
+<div class="slideshow" id="slideshow">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide title-slide active" data-bg="https://images.unsplash.com/photo-1610641816098-aecad8df33f1?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Road Trip Adventure</div>
+      <div class="slide-title">Swiss Alps<br>&amp; Italian Lakes</div>
+      <div class="slide-subtitle">Porto ✈ Zurich → Heididorf → Lake Maggiore → Lake Como → Home</div>
+      <div class="title-date">June / July 2026 &middot; 6 Nights &middot; 2 People</div>
+    </div>
+    <div class="photo-credit">Photo: Fabio Fistarol / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 2: Route Overview -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1693842897077-9b07b328ae35?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">The Route</div>
+      <div class="slide-title">6 Nights, 3 Destinations</div>
+      <ul class="highlights">
+        <li><span class="icon">✈</span> Fly Porto → Zurich</li>
+        <li><span class="icon">🏔</span> Night 1 — Maienfeld (Heididorf)</li>
+        <li><span class="icon">🌊</span> Nights 2–4 — Laveno-Mombello (Lake Maggiore)</li>
+        <li><span class="icon">⛵</span> Nights 5–6 — Menaggio (Lake Como)</li>
+        <li><span class="icon">✈</span> Day 7 — Drive to ZRH, fly home</li>
+      </ul>
+      <div class="slide-details" style="margin-top:32px">
+        <div class="detail-item">
+          <div class="detail-label">Total Driving</div>
+          <div class="detail-value">~450 km</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Rest Days</div>
+          <div class="detail-value">3</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Hotel Changes</div>
+          <div class="detail-value">2</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Mikita Yo / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 3: Day 1 — Heididorf -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1527668752968-14dc70a27c95?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 1 &middot; Night in Maienfeld</div>
+      <div class="slide-title">Heididorf</div>
+      <div class="slide-subtitle">Fly into Zurich, pick up the car, and drive 1.5h into the Swiss Alps.<br>Visit the original Heidi village, museum, and mountain trails.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Drive</div>
+          <div class="detail-value">120 km</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Time</div>
+          <div class="detail-value">1.5 hours</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Stay</div>
+          <div class="detail-value">Maienfeld</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Unsplash</div>
+  </div>
+
+  <!-- SLIDE 4: Day 2 — Laveno / Lake Maggiore -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1693842897077-9b07b328ae35?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 2 &middot; Night in Laveno</div>
+      <div class="slide-title">Lake Maggiore</div>
+      <div class="slide-subtitle">Drive south through the Gotthard Pass into the Italian Lakes.<br>Arrive in Laveno-Mombello on the eastern shore of Lake Maggiore.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Drive</div>
+          <div class="detail-value">210 km</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Time</div>
+          <div class="detail-value">2.5 hours</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Stay</div>
+          <div class="detail-value">Laveno</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Mikita Yo / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 5: Day 3 — Borromean Islands -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1628701303556-b95cfe0e4c02?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 3 &middot; Rest Day</div>
+      <div class="slide-title">Borromean Islands</div>
+      <div class="slide-subtitle">Take the ferry from Laveno to Intra, then boat to the stunning Borromean Islands.<br>Explore Isola Bella's baroque palace and Isola dei Pescatori's charming village.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Drive</div>
+          <div class="detail-value">None</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlight</div>
+          <div class="detail-value">🚢 Ferries</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Stay</div>
+          <div class="detail-value">Laveno</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Claudio Schwarz / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 6: Day 4 — Locarno / Lago d'Orta -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1610641816098-aecad8df33f1?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 4 &middot; Rest Day</div>
+      <div class="slide-title">Locarno, Ascona<br>or Lago d'Orta</div>
+      <div class="slide-subtitle">Choose your adventure: the Swiss lakeside towns of Locarno and Ascona,<br>or the hidden gem Lago d'Orta with tiny Isola San Giulio.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Locarno</div>
+          <div class="detail-value">~45 min</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Lago d'Orta</div>
+          <div class="detail-value">~30 min</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Stay</div>
+          <div class="detail-value">Laveno</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Fabio Fistarol / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 7: Day 5 — Menaggio / Nesso -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1591518329953-433ba981bc41?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 5 &middot; Night in Menaggio</div>
+      <div class="slide-title">Lake Como &amp; Nesso</div>
+      <div class="slide-subtitle">Short drive to Lake Como. Ferry across to Varenna, then south to Nesso — <br>the famous waterfall bridge and gorge. Evening in charming Menaggio.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Drive</div>
+          <div class="detail-value">40 km</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlight</div>
+          <div class="detail-value">🚢 + Nesso</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Stay</div>
+          <div class="detail-value">Menaggio</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Shalev Cohen / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 8: Day 6 — Bellagio / Tremezzo -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1586975303199-8c54f3ee97f2?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 6 &middot; Rest Day</div>
+      <div class="slide-title">Bellagio &amp; Tremezzo</div>
+      <div class="slide-subtitle">Ferry to Bellagio — the pearl of Lake Como. Stroll the elegant streets,<br>visit Villa del Balbianello, and take in the views from Tremezzo.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Drive</div>
+          <div class="detail-value">None</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlight</div>
+          <div class="detail-value">🚢 Bellagio</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Stay</div>
+          <div class="detail-value">Menaggio</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Lewis J Goetz / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 9: Day 7 — Departure -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1591523220721-d68764fd8386?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Day 7 &middot; Departure</div>
+      <div class="slide-title">Menaggio → Zurich</div>
+      <div class="slide-subtitle">Morning drive back through the Alps to Zurich Airport.<br>Drop off the car and catch your afternoon flight home.</div>
+      <div class="slide-details">
+        <div class="detail-item">
+          <div class="detail-label">Drive</div>
+          <div class="detail-value">200 km</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Time</div>
+          <div class="detail-value">2.5 hours</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Flight</div>
+          <div class="detail-value">14:00+ ✈</div>
+        </div>
+      </div>
+    </div>
+    <div class="photo-credit">Photo: Shalev Cohen / Unsplash</div>
+  </div>
+
+  <!-- SLIDE 10: Budget -->
+  <div class="slide" data-bg="https://images.unsplash.com/photo-1628701303556-b95cfe0e4c02?q=80&w=1600&auto=format&fit=crop">
+    <div class="slide-bg"></div>
+    <div class="slide-content">
+      <div class="slide-day">Budget &middot; Mid-Range &middot; 2 People</div>
+      <div class="slide-title" style="font-size:44px;margin-bottom:28px;">Trip Budget</div>
+      <table class="budget-table">
+        <tr><td>✈ Flights (easyJet, 2 pax)</td><td>€260</td></tr>
+        <tr><td>🚗 Car rental (6 days)</td><td>€215</td></tr>
+        <tr><td>⛽ Fuel + vignette + parking</td><td>€160</td></tr>
+        <tr><td>🏨 Maienfeld (1 night)</td><td>€130</td></tr>
+        <tr><td>🏨 Laveno (3 nights)</td><td>€300</td></tr>
+        <tr><td>🏨 Menaggio (2 nights)</td><td>€240</td></tr>
+        <tr><td>🍽 Food (7 days)</td><td>€665</td></tr>
+        <tr><td>🎟 Activities &amp; ferries</td><td>€200</td></tr>
+        <tr class="total"><td>Total</td><td>€2,170</td></tr>
+        <tr class="total"><td>Per Person</td><td>€1,085</td></tr>
+      </table>
+    </div>
+    <div class="photo-credit">Photo: Claudio Schwarz / Unsplash</div>
+  </div>
+
+</div>
+
+<div class="keyboard-hint">← → arrow keys or click arrows to navigate</div>
+
+<div class="nav-arrows">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">◀</button>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">▶</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('slideCounter');
+  const progress = document.getElementById('progressBar');
+  let current = 0;
+  const total = slides.length;
+
+  // Preload background images
+  slides.forEach(slide => {
+    const url = slide.dataset.bg;
+    if (url) {
+      slide.querySelector('.slide-bg').style.backgroundImage = `url(${url})`;
+    }
+  });
+
+  function goTo(index) {
+    if (index < 0) index = total - 1;
+    if (index >= total) index = 0;
+    slides[current].classList.remove('active');
+    slides[index].classList.add('active');
+    current = index;
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current + 1) / total) * 100}%`;
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => goTo(current - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? goTo(current + 1) : goTo(current - 1);
+    }
+  });
+
+  // Initialize
+  goTo(0);
+</script>
+
+</body>
+</html>
